@@ -2,6 +2,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.backend.api.routes import router
+from src.backend.services.predictor import load_models
 
 app = FastAPI(
     title="Dr. ML Prediction App",
@@ -24,11 +25,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def startup_event():
+    load_models()
+
 @app.get("/")
 def root():
     return {"status": "ok", "service": "dr-ml-api"}
 
-# NEW: handle Render's HEAD /
 @app.head("/")
 def root_head():
     return Response(status_code=200)
