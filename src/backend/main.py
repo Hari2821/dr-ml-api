@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -40,5 +43,14 @@ def root_head():
 @app.get("/health")
 def health():
     return {"ok": True}
+
+# NEW: verify exactly what Render is running
+@app.get("/version")
+def version():
+    return {
+        "render_git_commit": os.environ.get("RENDER_GIT_COMMIT"),
+        "render_service_id": os.environ.get("RENDER_SERVICE_ID"),
+        "main_py": str(Path(__file__).resolve()),
+    }
 
 app.include_router(router, prefix="/api")

@@ -8,13 +8,13 @@ from fastapi import HTTPException
 
 logger = logging.getLogger("uvicorn.error")
 
-# File path:
-# /mnt/c/dr-ml-api/src/backend/services/predictor.py
+# predictor.py path:
+# <repo>/src/backend/services/predictor.py
 # parents:
 # 0 = services
 # 1 = backend
 # 2 = src
-# 3 = repo root (dr-ml-api)  ✅
+# 3 = repo root (dr-ml-api)
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MODEL_DIR = REPO_ROOT / "model_dir"
 
@@ -42,6 +42,7 @@ def _normalize_disease(disease) -> str:
         "diabetic": "diabetes",
         "sugar": "diabetes",
     }
+
     d = aliases.get(d, d)
 
     if d not in {"diabetes", "heart_disease"}:
@@ -87,7 +88,7 @@ def _vector_from_features(disease: str, features: dict) -> np.ndarray:
             "thalach", "exang", "oldpeak", "slope", "ca", "thal"
         ]
     else:
-        # If your diabetes training used different names, update only these keys.
+        # If your diabetes pipeline expects different names, update only these keys
         keys = [
             "pregnancies", "glucose", "bloodpressure", "skinthickness",
             "insulin", "bmi", "diabetespedigreefunction", "age"
