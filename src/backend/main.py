@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.backend.api.routes import router
@@ -9,7 +9,6 @@ app = FastAPI(
     description="Multi-disease prediction backend"
 )
 
-# CORS (Lovable + localhost + any lovable subdomain previews)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -25,14 +24,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health + root endpoints (Render hits / and HEAD /)
 @app.get("/")
 def root():
     return {"status": "ok", "service": "dr-ml-api"}
+
+# NEW: handle Render's HEAD /
+@app.head("/")
+def root_head():
+    return Response(status_code=200)
 
 @app.get("/health")
 def health():
     return {"ok": True}
 
-# Include API routes
 app.include_router(router, prefix="/api")
