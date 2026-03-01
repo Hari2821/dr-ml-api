@@ -19,3 +19,4 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
+allow_origins=["https://care-predictor-tool.lovable.app"]
