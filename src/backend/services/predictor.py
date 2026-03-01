@@ -1,18 +1,13 @@
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 
 import joblib
 import numpy as np
+import pandas as pd
 from fastapi import HTTPException
 
 logger = logging.getLogger("uvicorn.error")
-
-try:
-    import pandas as pd  # type: ignore
-except Exception:
-    pd = None
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MODEL_DIR = REPO_ROOT / "model_dir"
@@ -73,7 +68,6 @@ def load_models() -> None:
 
 
 def _canonicalize_key(k: str) -> str:
-    # Make key matching tolerant: BloodPressure, blood_pressure, bloodpressure all match
     return "".join(ch for ch in k.strip().lower() if ch.isalnum())
 
 
@@ -96,17 +90,15 @@ def _default_keys_for_disease(disease: str) -> List[str]:
             "age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
             "thalach", "exang", "oldpeak", "slope", "ca", "thal"
         ]
-    # Diabetes (support both common PIMA styles)
     return [
         "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
         "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
     ]
 
 
-def _build_model_input(model: Any, disease: str, features: dict):
+def _build_model_input(model: Any, disease: str, features: dict) -> pd.DataFrame:
     lookup = _make_lookup(features)
 
-    # Best: use the exact training columns if the model exposes them
     cols = None
     if hasattr(model, "feature_names_in_"):
         try:
@@ -119,6 +111,7 @@ def _build_model_input(model: Any, disease: str, features: dict):
 
     row = {}
     missing = []
+
     for c in cols:
         try:
             row[c] = float(_get_value(lookup, c))
@@ -133,15 +126,11 @@ def _build_model_input(model: Any, disease: str, features: dict):
             detail=f"Missing feature(s) for {disease}: {missing}"
         )
 
-    # Prefer DataFrame if available (many pipelines require it)
-    if pd is not None:
-        return pd.DataFrame([row], columns=cols)
-
-    # Fallback to numpy array in the same column order
-    return np.array([row[c] for c in cols], dtype=float).reshape(1, -1)
+    # IMPORTANT: Always return DataFrame (ColumnTransformer needs it for string columns)
+    return pd.DataFrame([row], columns=cols)
 
 
-def _predict(model: Any, X) -> Dict[str, Any]:
+def _predict(model: Any, X: pd.DataFrame) -> Dict[str, Any]:
     pred = int(model.predict(X)[0])
 
     prob = None
@@ -168,6 +157,5 @@ def predict_disease(disease: str, input_data: dict) -> Dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
-        # This will give you a JSON error and a full traceback in Render logs
         logger.exception("Prediction failed")
         raise HTTPException(status_code=500, detail=str(e))
