@@ -9,14 +9,13 @@ app = FastAPI(
     description="Multi-disease prediction backend"
 )
 
-# Enable CORS
+# Lock CORS to Lovable domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later replace with your Lovable domain
+    allow_origins=["https://care-predictor-tool.lovable.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.include_router(router, prefix="/api")
-allow_origins=["https://care-predictor-tool.lovable.app"]
